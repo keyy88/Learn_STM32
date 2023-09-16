@@ -22,6 +22,8 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+void delay_ms(int time);
+
 uint32_t *RCC_CR = (uint32_t*) 0x40021000;
 uint32_t *RCC_CFGR = (uint32_t*) 0x40021004;
 uint32_t *RCC_AHBENR = (uint32_t*) 0x40021014;
@@ -39,8 +41,21 @@ int main(void)
 	*GPIOC_MODER = (1U << 26U);
 	*GPIOC_OTYPER = (1U << 13U);
 
-	*GPIOC_ODR = (0U << 13U);
-	*GPIOC_ODR = (1U << 13U);
 	/* Loop forever */
-	for(;;);
+	for(;;)
+	{
+		*GPIOC_ODR = (0U << 13U);
+		delay_ms(100000);
+		*GPIOC_ODR = (1U << 13U);
+		delay_ms(100000); //Not exactly in ms
+	}
+}
+
+void delay_ms(int time)
+{
+	int i = 0;
+	while(i < time)
+	{
+		i++;
+	}
 }
