@@ -25,36 +25,90 @@
 void delay_ms(int time);
 
 uint32_t *RCC_CR = (uint32_t*) 0x40021000;
+uint32_t *RCC_APB1ENR = (uint32_t*) 0x4002101C;
+//uint32_t *RCC_APB2ENR = (uint32_t*) 0x40021018;
 uint32_t *RCC_CFGR = (uint32_t*) 0x40021004;
 uint32_t *RCC_AHBENR = (uint32_t*) 0x40021014;
 
 uint32_t *GPIOC_MODER = (uint32_t*) 0x48000800;
+uint32_t *GPIOC_OSPEEDR = (uint32_t*) 0x48000808;
 uint32_t *GPIOC_OTYPER = (uint32_t*) 0x48000804;
 uint32_t *GPIOC_ODR = (uint32_t*) 0x48000814;
+uint32_t *GPIOC_BSRR = (uint32_t*) 0x48000818;
+
+uint32_t *GPIOB_MODER = (uint32_t*) 0x48000400;
+uint32_t *GPIOB_OSPEEDR = (uint32_t*) 0x48000408;
+//uint32_t *GPIOA_OTYPER = (uint32_t*) 0x48000004;
+uint32_t *GPIOB_AFRL = (uint32_t*) 0x48000420;
+
+uint32_t *TIM3_CR1 = (uint32_t*) 0x40000400;
+uint32_t *TIM3_ARR = (uint32_t*) 0x4000042C;
+uint32_t *TIM3_CNT = (uint32_t*) 0x40000424;
+uint32_t *TIM3_PSC = (uint32_t*) 0x40000428;
+uint32_t *TIM3_CCER = (uint32_t*) 0x40000420;
+uint32_t *TIM3_CCR1 = (uint32_t*) 0x40000434;
+uint32_t *TIM3_CCMR1 = (uint32_t*) 0x40000418;
 
 int main(void)
 {
-	*RCC_CFGR = (1U << 31U)|(7U << 24U)|(4U << 18U)|(2U << 15U)|(2U << 0U);
-	*RCC_CR = (1U << 24U);
-	*RCC_AHBENR = (1U << 19U);
+	*RCC_CR = (1U << 16U);
+	while(!(*RCC_CR & (1U << 17U)));
 
+	*RCC_APB1ENR = (1U << 28U)|(1U << 1U);
+
+//	*RCC_CFGR = (1U << 31U)|(7U << 24U)|(4U << 18U)|(2U << 15U)|(2U << 0U);
+	*RCC_CFGR = (1U << 31U)|(4U << 18U)|(2U << 15U)|(2U << 0U);
+//	*RCC_AHBENR = (1U << 22U)|(1U << 19U);
+
+//	*RCC_APB2ENR =
+
+	*RCC_AHBENR = (1U << 19U)|(1U << 18U);
+	*RCC_CR |= (1U << 24U);
+	while(!(*RCC_CR & (1U << 25)));
 	*GPIOC_MODER = (1U << 26U);
+	*GPIOC_OSPEEDR = (3U << 26U);
 	*GPIOC_OTYPER = (1U << 13U);
+
+	*GPIOB_MODER |= (2U << 10U)|(2U << 8U);
+	*GPIOB_OSPEEDR = (3U << 10U)|(3U << 8U);
+//	*GPIOA_OTYPER = (1U << 14U)|(1U << 12U);
+	*GPIOB_AFRL = (1U << 20U)|(1U << 16U);
+
+	*TIM3_CR1 = (1U << 7U);
+	*TIM3_ARR = (4800U);
+	*TIM3_PSC = (100U);
+	*TIM3_CCER = (1U);
+	*TIM3_CCR1 = (0U);
+	*TIM3_CCMR1 = (6U << 4U);
+
+
+	*TIM3_CR1 |= (1U);
 
 	/* Loop forever */
 	for(;;)
 	{
+		for(int i = 0; i < 4800; i++)
+		{
+			*TIM3_CCR1 = (i);
+		}
+//		delay_ms(100000);
+//		for(int i = 4800; i > 0; i--)
+//		{
+//			*TIM3_CCR1 = (i);
+//		}
+//		*GPIOC_BSRR = (1U << 13U);
+//		*GPIOC_BSRR = (1U << 29U);
 		*GPIOC_ODR = (0U << 13U);
-		delay_ms(100000);
+//		delay_ms(1000);
 		*GPIOC_ODR = (1U << 13U);
-		delay_ms(100000); //Not exactly in ms
+//		delay_ms(1000); // Not exactly in ms
 	}
 }
 
 void delay_ms(int time)
 {
 	int i = 0;
-	while(i < time)
+	while(i < (2 * time))
 	{
 		i++;
 	}
