@@ -17,6 +17,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
@@ -26,6 +27,7 @@ void delay_ms(int time);
 void loop();
 void pwm();
 void blink();
+//void EXTI0_1_IRQHandler();
 
 uint32_t *RCC_CR = (uint32_t*) 0x40021000;
 uint32_t *RCC_CFGR = (uint32_t*) 0x40021004;
@@ -79,8 +81,32 @@ uint32_t *TIM3_CNT = (uint32_t*) 0x40000424;
 uint32_t *TIM3_PSC = (uint32_t*) 0x40000428;
 uint32_t *TIM3_ARR = (uint32_t*) 0x4000042C;
 uint32_t *TIM3_CCR1 = (uint32_t*) 0x40000434;
+uint32_t *TIM3_CCR2 = (uint32_t*) 0x40000438;
+uint32_t *TIM3_CCR3 = (uint32_t*) 0x4000043C;
+uint32_t *TIM3_CCR4 = (uint32_t*) 0x40000440;
 uint32_t *TIM3_DCR = (uint32_t*) 0x40000448;
 uint32_t *TIM3_DMAR = (uint32_t*) 0x4000044C;
+
+uint32_t *SYSCFG_CFGR1 = (uint32_t*) 0x40010000;
+uint32_t *SYSCFG_EXTICR1 = (uint32_t*) 0x40010008;
+
+
+uint32_t *NVIC_ISER = (uint32_t*) 0xE000E100;
+uint32_t *NVIC_ICER = (uint32_t*) 0XE000E180;
+uint32_t *NVIC_ISPR = (uint32_t*) 0XE000E200;
+uint32_t *NVIC_ICPR = (uint32_t*) 0XE000E280;
+uint32_t *NVIC_IPR0 = (uint32_t*) 0xE000E400;
+
+uint32_t *EXTI_IMR = (uint32_t*) 0x40010400;
+uint32_t *EXTI_EMR = (uint32_t*) 0x40010404;
+uint32_t *EXTI_RTSR = (uint32_t*) 0x40010408;
+uint32_t *EXTI_FTSR = (uint32_t*) 0x4001040C;
+uint32_t *EXTI_SWIER = (uint32_t*) 0x40010410;
+uint32_t *EXTI_PR = (uint32_t*) 0x40010414;
+uint32_t *EXTI0_1 = (uint32_t*) 0x00000054;
+
+int i = 4800;
+bool led = 1;
 
 int main(void)
 {
@@ -88,6 +114,7 @@ int main(void)
 	while(!(*RCC_CR & (1U << 17U)));
 
 	*RCC_APB1ENR = (1U << 28U)|(1U << 1U);
+	*RCC_APB2ENR = (1U);
 
 //	*RCC_CFGR = (1U << 31U)|(7U << 24U)|(4U << 18U)|(2U << 15U)|(2U << 0U);
 	*RCC_CFGR = (1U << 31U)|(4U << 18U)|(2U << 15U)|(2U << 0U);
@@ -95,28 +122,41 @@ int main(void)
 
 //	*RCC_APB2ENR =
 
-	*RCC_AHBENR = (1U << 19U)|(1U << 18U);
+	*RCC_AHBENR = (1U << 19U)|(1U << 18U)|(1U << 17U);
 	*RCC_CR |= (1U << 24U);
 	while(!(*RCC_CR & (1U << 25)));
+
 	*GPIOC_MODER = (1U << 26U);
 	*GPIOC_OSPEEDR = (3U << 26U);
 	*GPIOC_OTYPER = (1U << 13U);
 
-	*GPIOB_MODER |= (2U << 10U)|(2U << 8U)|(1U << 6U);
-	*GPIOB_OSPEEDR = (3U << 10U)|(3U << 8U)|(3U << 6U);
+	*GPIOB_MODER |= (2U << 10U)|(2U << 8U)|(1U << 6U)|(2U << 2U)|(2U);
+	*GPIOB_OSPEEDR |= (2U << 10U)|(2U << 8U)|(1U << 6U)|(2U << 2U)|(2U);
 //	*GPIOA_OTYPER = (1U << 14U)|(1U << 12U);
-	*GPIOB_AFRL = (1U << 20U)|(1U << 16U);
+	*GPIOB_AFRL |= (1U << 20U)|(1U << 16U)|(1U << 4U)|(1U);
 
 	*TIM3_CR1 = (1U << 7U);
 	*TIM3_ARR = (4800U);
 	*TIM3_PSC = (100U);
 	*TIM3_CCR1 = (0U);
-	*TIM3_CCMR1 = (6U << 4U);
-	*TIM3_CCER = (1U);
-//
-//
+	*TIM3_CCR2 = (0U);
+	*TIM3_CCR3 = (0U);
+	*TIM3_CCR4 = (0U);
+	*TIM3_CCMR1 = (6U << 12U)|(6U << 4U);
+	*TIM3_CCMR2 = (6U << 12U)|(6U << 4U);
+	*TIM3_CCER = (1U << 12U)|(1U << 8U)|(1U << 4U)|(1U);
 	*TIM3_CR1 |= (1U);
 
+	*SYSCFG_EXTICR1 = (0U);
+
+	*EXTI_IMR |= (1U);
+	*EXTI_FTSR |= (1U);
+
+	*NVIC_IPR0 |= (0U);
+	*NVIC_ISER |= (1U);
+
+//	*EXTI_EMR = (1U << 4U);
+//	*EXTI_SWIER = (1U << 4U);
 	/* Loop forever */
 	for(;;)
 	{
@@ -126,19 +166,58 @@ int main(void)
 
 void loop()
 {
-	pwm();
+//	pwm();
+	if(led)
+	{
+		*TIM3_CCR3 = (4800*0.833); // Red
+		*TIM3_CCR1 = (4800*0.327); // Green
+		*TIM3_CCR4 = (4800); //Blue
+	}
+	else
+	{
+		*TIM3_CCR3 = (0); // Red
+		*TIM3_CCR1 = (0); // Green
+		*TIM3_CCR4 = (4800*1); //Blue
+	}
+}
+
+void EXTI0_1_IRQHandler()
+{
+	while(1);
+	*EXTI_PR = (1U);
+	led = !led;
 }
 
 void pwm()
 {
-	for(int i = 0; i < 4800; i++)
+	for(int i = 0; i < (4800*0.733); i++) // Red LED
+	{
+		*TIM3_CCR3 = (i);
+		delay_ms(1000);
+	}
+	for(int i = 0; i < (4800*0.327); i++) // Green LED
 	{
 		*TIM3_CCR1 = (i);
 		delay_ms(1000);
 	}
-	for(int i = 4800; i > 0; i--)
+	for(int i = 0; i < (4800*1); i++) //Blue LED
+	{
+		*TIM3_CCR4 = (i); //B
+		delay_ms(1000);
+	}
+	for(int i = (4800*0.733); i > 0; i--) // Red LED
+	{
+		*TIM3_CCR3 = (i);
+		delay_ms(1000);
+	}
+	for(int i = (4800*0.827); i > 0; i--) // Green LED
 	{
 		*TIM3_CCR1 = (i);
+		delay_ms(1000);
+	}
+	for(int i = (4800*1); i > 0; i--) // Blue LED
+	{
+		*TIM3_CCR4 = (i);
 		delay_ms(1000);
 	}
 }
